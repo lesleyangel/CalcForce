@@ -1,0 +1,64 @@
+1.  C_Cpp › Default: Compiler Path
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\Hostx86\x86\cl.exe
+2.  tasks.json
+{
+    "version": "2.0.0",
+    "windows": {
+      "options": {
+        "shell": {
+          "executable": "cmd.exe",
+          "args": [
+            "/C",
+            // The path to VsDevCmd.bat depends on the version of Visual Studio you have installed.
+            "\"C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/Tools/VsDevCmd.bat\"",
+            "&&"
+          ]
+        }
+      }
+    },
+    "tasks": [
+      {
+        "type": "shell",
+        "label": "cl.exe build active file",
+        "command": "cl.exe",
+        "args": [
+          "/Zi",
+          "/EHsc",
+          "NasPrinter.cpp",  // 这里填写下包含的项目文件
+          "Aero.cpp",
+          "Interpolation.cpp",
+          "material.cpp",
+          "Missile.cpp",
+          "ShapeDesign.cpp",
+          "ShapeInfo.cpp",
+          "/Fe:",
+          "${fileDirname}\\${fileBasenameNoExtension}.exe",
+          "${file}"
+        ],
+        "problemMatcher": ["$msCompile"],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      }
+    ]
+  }
+
+3.  launch.json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++: cl.exe build and debug active file",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "preLaunchTask": "cl.exe build active file"
+    }
+  ]
+}
