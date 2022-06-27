@@ -20,7 +20,7 @@ int NasPrinter::PrintBDF(const std::string& path, const std::string & name, Outp
 	{
 	case OutputStyle::onefile:{
 		ofstream ofs;
-		ofs.open(path + name + "_Header.bdf", ios::trunc);
+		ofs.open(path + name + ".bdf", ios::trunc);
 		ofs << ssHeader.str();
 		ofs << ssMesh.str();
 		ofs << ssForce.str();
@@ -32,7 +32,7 @@ int NasPrinter::PrintBDF(const std::string& path, const std::string & name, Outp
 	case OutputStyle::multifile: {
 		ofstream ofsHeader,ofsForce,ofsMesh,ofsProperty;
 		//
-		ofsHeader.open(path + name + "_Header.bdf", ios::trunc);
+		ofsHeader.open(path + name + ".bdf", ios::trunc);
 		ofsHeader << ssHeader.str();
 		ofsHeader << "include '" << (name + "_mesh.bdf'") << endl;//头文件内部使用相对路径
 		ofsHeader << "include '" << (name + "_property.bdf'") << endl;//头文件内部使用相对路径

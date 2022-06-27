@@ -253,7 +253,7 @@
 //		//调用nastran
 //		myNastran nas;
 //		nas.NastranPath = path_list[PNas];
-//		nas.BDFPath = filepath + "\\" + filename + "_Header.bdf";
+//		nas.BDFPath = filepath + "\\" + filename + ".bdf";
 //		nas.WorkPath = filepath;
 //		nas.CalcFilePath();
 //		nas.NastranCalc();
@@ -565,7 +565,7 @@
 //		//调用nastran
 //		myNastran nas;
 //		nas.NastranPath = path_list[PNas];
-//		nas.BDFPath = filepath + "\\" + filename + "_Header.bdf";
+//		nas.BDFPath = filepath + "\\" + filename + ".bdf";
 //		nas.WorkPath = filepath;
 //		nas.CalcFilePath();
 //		nas.NastranCalc();
@@ -926,7 +926,7 @@
 //		//调用nastran
 //		myNastran nas;
 //		nas.NastranPath = path_list[PNas];
-//		nas.BDFPath = filepath + "\\" + filename + "_Header.bdf";
+//		nas.BDFPath = filepath + "\\" + filename + ".bdf";
 //		nas.WorkPath = filepath;
 //		nas.CalcFilePath();
 //		int ifNastranRun = nas.NastranCalc();
@@ -1008,6 +1008,7 @@ int Minuteman3::ReadFromFile(const string& path)
 	if (state < 0) return -1;
 	calcInitInfo();
 	ofstream ofs(mt3info.path_list.POut);
+	ofs << std::left;
 	for (int i = 0; i < aero.CP_vec.size(); i++)
 	{
 		initinfo.CPinfo = aero.CP_vec[i];
@@ -1034,7 +1035,7 @@ int Minuteman3::ReadFromFile(const string& path)
 		//调用nastran
 		myNastran nas;
 		nas.NastranPath = mt3info.path_list.PNas;
-		nas.BDFPath = filepath + "\\" + filename + "_Header.bdf";
+		nas.BDFPath = filepath + "\\" + filename + ".bdf";
 		nas.WorkPath = filepath;
 		nas.CalcFilePath();
 		int ifNastranRun = nas.NastranCalc();
@@ -1064,6 +1065,18 @@ int Minuteman3::ReadFromFile(const string& path)
 			return -1;
 		}
 		//
+		
+		stringstream ss_t, ss_1, ss_2,ss_3, ss_4;
+		ss_t << std::left;
+		ss_1 << std::left;
+		ss_2 << std::left;
+		ss_3 << std::left;
+		ss_4 << std::left;
+		auto out = [](const string &name, const string &type, const string &value, stringstream &ss){
+			const int titlenum = 24;
+			const int tpyenum = 17;
+			ss << setw(titlenum) << name << setw(tpyenum) << type << value << "\n";
+		};
 		if (mt3info.SOLtype == 200)
 		{
 			const vector<PSHELL> ps = nas.GetPSHELLlist();
@@ -1071,30 +1084,35 @@ int Minuteman3::ReadFromFile(const string& path)
 			if (state < 0) return -200;
 			for (size_t j = 0; j < nas.GetPSHELLlist().size(); j++)
 			{
-				ofs << "cabin_" + to_string(ps[j].PID) + "_T  = " << ps[j].T << endl;
+				out("cabin_" + to_string(ps[j].PID) + "_T", "double", to_string(ps[j].T),ss_t);
 			}
 		}
-		ofs << "StructMass = " << GetStructMass() << endl;
-		ofs << "[  " << "Alp = " << aero.CP_vec[i].alpha << "  Ma = " << aero.CP_vec[i].mach << "  ]" << endl;
+		out("StructMass", "double", to_string(GetStructMass()), ss_t);
+		out("Alp", "double", to_string(aero.CP_vec[i].alpha), ss_t);
+		out("Ma", "double", to_string(aero.CP_vec[i].mach), ss_t);
+
 		for (int j = 0; j < cb_list_res.size(); j++)
 		{
 			//ofs << "舱段" << j + 1 << "最大工况输出：" << endl;
-			ofs << "Cabin" << j+1 << "_MaxStress     = " << nas.GetMaxStress()[j] << endl;
+			out("Cabin" + to_string(j + 1) + "_MaxStress", "double", to_string(nas.GetMaxStress()[j]), ss_1);
 			const Point maxStress =(
 				mesh_res.P[mesh_res.E[0][nas.GetMaxStressID()[j]][0]] + 
 				mesh_res.P[mesh_res.E[0][nas.GetMaxStressID()[j]][1]] +
 				mesh_res.P[mesh_res.E[0][nas.GetMaxStressID()[j]][2]] +
 				mesh_res.P[mesh_res.E[0][nas.GetMaxStressID()[j]][3]]) / 4.0;
-			ofs << "Cabin" << j+1 << "_MaxStressSite = " << maxStress.getX() << ", " << maxStress.getY() << ", " << maxStress.getZ() << "" << endl;
+			const string str_res = to_string(maxStress.getX()) + "," + to_string(maxStress.getY()) + "," + to_string(maxStress.getZ());
+			out("Cabin" + to_string(j + 1) + "_MaxStressSite", "double_vector", str_res, ss_2);
 
-			ofs << "Cabin" << j+1 << "_MaxStrain     = " << nas.GetMaxStrain()[j] << endl;
+			out("Cabin" + to_string(j + 1) + "_MaxStrain", "double", to_string(nas.GetMaxStrain()[j]), ss_3);
 			const Point maxStrain =(
 				mesh_res.P[mesh_res.E[0][nas.GetMaxStrainID()[j]][0]] +
 				mesh_res.P[mesh_res.E[0][nas.GetMaxStrainID()[j]][1]] +
 				mesh_res.P[mesh_res.E[0][nas.GetMaxStrainID()[j]][2]] +
 				mesh_res.P[mesh_res.E[0][nas.GetMaxStrainID()[j]][3]]) / 4.0;
-			ofs << "Cabin" << j+1 << "_MaxStrainSite = " << maxStrain.getX() << ", " << maxStrain.getY() << ", " << maxStrain.getZ() << "" << endl;
+			const string str_res2 = to_string(maxStrain.getX()) + "," + to_string(maxStrain.getY()) + "," + to_string(maxStrain.getZ());
+			out("Cabin" + to_string(j + 1) + "_MaxStrainSite", "double_vector", str_res2, ss_4);
 		}
+		ofs << ss_t.str() << ss_1.str()  << ss_2.str()  << ss_3.str()  << ss_4.str();
 		////------------------------需要隔框时请取消这部分注释-----------------------------------
 		//ofs << endl;
 		//for (int j = 0; j < nas.GetMaxStressBar().size(); j++)
@@ -1122,21 +1140,7 @@ int Minuteman3::calcInitInfo()
 
 	//----------------------------参数设置----------------------------
 	//定义外形曲线
-	// initinfo.ShapeFuncList.resize(9);
-	// initinfo.ShapeFuncList[0] = Point(0, 0);			initinfo.ShapeFuncList[1] = Point(500, 177.277);	initinfo.ShapeFuncList[2] = Point(1000, 291.822);
-	// initinfo.ShapeFuncList[3] = Point(1500, 386.266);	initinfo.ShapeFuncList[4] = Point(2000, 466.69);	initinfo.ShapeFuncList[5] = Point(2500, 535.162);
-	// initinfo.ShapeFuncList[6] = Point(3000, 591.979);	initinfo.ShapeFuncList[7] = Point(3500, 635.746);	initinfo.ShapeFuncList[8] = Point(4000, 660);//8为头罩仓的结束位置
-	// //initinfo.ShapeFuncList[9]  = Point(6000,660);		initinfo.ShapeFuncList[10] = Point(6700,660);		initinfo.ShapeFuncList[11] = Point(9817,660);
-	// //initinfo.ShapeFuncList[12] = Point(10817,835);	initinfo.ShapeFuncList[13] = Point(17817,835);		initinfo.ShapeFuncList[14] = Point(18607,850);
-	// for (int i = 0; i < initinfo.ShapeFuncList.size(); i++) initinfo.ShapeFuncList[i] = initinfo.ShapeFuncList[i] / 1000.0;
-	// double HeadEtaX = mt3info.Cabin_list[0].CSite / initinfo.ShapeFuncList[8].getX();
-	// double HeadEtaY = mt3info.Cabin_list[0].CRadius / initinfo.ShapeFuncList[8].getY();
-	// for (int i = 0; i < 9; i++)
-	// {
-	// 	double x_new = initinfo.ShapeFuncList[i].getX() * HeadEtaX;
-	// 	double y_new = initinfo.ShapeFuncList[i].getY() * HeadEtaY;
-	// 	initinfo.ShapeFuncList[i].SetSite(x_new, y_new);
-	// }
+	const int HeadPrecision = 300;//头部网格精细度
 	//冯卡门曲线函数
 	auto phi = [](double x, double L){
 		return acos(1 - 2 * x / L);
@@ -1144,7 +1148,7 @@ int Minuteman3::calcInitInfo()
 	auto r = [](double Rd, double phi){
 		return Rd / sqrt(pi) * sqrt(phi - 1.0 / 2.0 * sin(2 * phi));
 	};
-	const int HeadPrecision = 300;//头部网格精细度
+	
 	initinfo.ShapeFuncList.resize(HeadPrecision);
 	for (int i = 0; i < HeadPrecision; i++)
 	{
@@ -1160,8 +1164,7 @@ int Minuteman3::calcInitInfo()
 		initinfo.ShapeFuncList.push_back(Point(mt3info.Cabin_list[i].CSite, mt3info.Cabin_list[i].CRadius));
 	}
 	//定义周向坐标点、梁数目
-	
-	initinfo.faiNum *= (double)mt3info.ElemNumRatio;	//定义周向坐标点数
+	initinfo.faiNum =(int)(initinfo.faiNum * mt3info.ElemNumRatio);	//定义周向坐标点数
 	initinfo.beamPID = {};
 	//定义集中质量（质量、质心、名称（可缺省））
 	initinfo.mpinit.resize(0);
@@ -1186,7 +1189,7 @@ int Minuteman3::calcInitInfo()
 	//定义舱段信息（ x1,  MID,  T, extramass, siteNum = 1,PBARL_list ）
 	vector<int> siteNum(7);
 	siteNum[0] = 100; siteNum[1] = 50; siteNum[2] = 20; siteNum[3] = 60; siteNum[4] = 20; siteNum[5] = 200; siteNum[6] = 20;
-	for (int i = 0; i < siteNum.size(); i++) siteNum[i] *= (double)mt3info.ElemNumRatio;
+	for (int i = 0; i < siteNum.size(); i++) siteNum[i] = (int)(siteNum[i]*mt3info.ElemNumRatio);
 
 	vector<vector<int>> PBARL_LIST(7);//隔框数据 这里是定死的7个舱段
 	PBARL_LIST[0].push_back(1);	PBARL_LIST[0].push_back(1);//第一个隔框在零点位置 不会输出
@@ -1443,7 +1446,7 @@ int TestTube::ReadFromFile(const string &path)
 	cabininfo.x1 = 10;//结束位置
 	cabininfo.MID = 1;//材料属性编号
 	cabininfo.T = 0.1;//壳体厚度
-	cabininfo.siteNum = 30* Ratio;//舱段轴向网格数
+	cabininfo.siteNum = (int)(30 * Ratio); //舱段轴向网格数
 	cabininfo.extramass = 0;//额外质量
 	cabininfo.bhlist = {};//隔框数量和材料属性
 	initinfo.cbinit = {
@@ -1486,7 +1489,7 @@ int TestTube::ReadFromFile(const string &path)
 		initinfo.meterial_list.push_back(mt);
 	}
 	//
-	initinfo.faiNum *= Ratio;	//定义周向坐标点数
+	initinfo.faiNum = (int)(initinfo.faiNum * Ratio); //定义周向坐标点数
 	//
 	ReadCP aero;
 	aero.readFile(mt3info.path_list.PAer);
@@ -1517,7 +1520,7 @@ int TestTube::ReadFromFile(const string &path)
 	//调用nastran
 	myNastran nas;
 	nas.NastranPath = mt3info.path_list.PNas;
-	nas.BDFPath = filepath + "\\" + filename + "_Header.bdf";
+	nas.BDFPath = filepath + "\\" + filename + ".bdf";
 	nas.WorkPath = filepath;
 	nas.CalcFilePath();
 	int ifNastranRun = nas.NastranCalc();

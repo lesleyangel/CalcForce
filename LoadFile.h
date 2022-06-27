@@ -26,7 +26,7 @@ using namespace std;
 class LoadInput
 {
 public:
-	enum class Suffix { txt, ini };
+	enum class Suffix { txt, ini, cst };
 	LoadInput(const string& path);
 	int readFile();
 	template <typename T>

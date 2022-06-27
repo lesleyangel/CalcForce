@@ -279,6 +279,10 @@ int LoadInput::readFile()
 			getline(ss, temp.first,'=');
 			getline(ss, temp.second, '=');
 			break;
+		case LoadInput::Suffix::cst:
+			getline(ss, temp.first, ',');
+			getline(ss, temp.second);
+			break;
 		default:
 			break;
 		}

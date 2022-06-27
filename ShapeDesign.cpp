@@ -12,8 +12,9 @@ using namespace std;
 
 #define ELEM3		//定义开头封闭
 #define HAVE_MASS	//定义生成集中质量
-#define gekuang		//生成隔框
+#define HVAE_GEKUANG		//生成隔框
 // #define ONLY_2_MAT //当生成测试网格需要只用两个单元属性时打开
+#define DEVICE_ON_SKIN //当设备质量分布在隔框间蒙皮上的时候打开
 ShapeMash::ShapeMash() 
 { 
 	ShapeFunc.clear(); 
@@ -605,8 +606,6 @@ void ShapeMash::CalcCabin()
 int ShapeMash::PrintMesh(string fileName, int SOL)
 {
 	NasPrinter np;
-	const string names = fileName.substr(fileName.find_last_of("\\") + 1);
-
 	int ID = 0;//节点编号
 	int EID = 0;//单元编号
 	int PID = 0;//截面or壳单元属性编号
@@ -696,7 +695,7 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 		}
 	}
 	//----------------element----------------
-#ifdef gekuang
+#ifdef HVAE_GEKUANG
 	for (int i = 0; i < meshSkin.E[1].size(); i++)//输出结构隔框单元
 	{
 		const int iID = meshSkin.E[1][i][0] / FaiNum;
@@ -757,7 +756,7 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 			{
 				np.addCBAR(++EID, PIDnow, 1, GB, orientX, orientY, orientZ);
 			}
-			else
+			else 
 #endif
 			{
 				np.addCBAR(++EID, PIDnow, GA, GB, orientX, orientY, orientZ);
@@ -797,9 +796,7 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 					{
 						G1j.push_back(j + 1);
 					}
-					
 					np.addRBE3(++EID, ID, 123456, 1.0, 123, G1j);
-					
 				}
 			}
 			else
@@ -812,18 +809,23 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 				vector<int> G1j;//多个节点
 				if (bulkheadID.size() != 0)
 				{
-					for (int j = (bulkheadID[Instrument[i].bulkheadID0]) * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID0] + 1)*FaiNum ; j++)
+#ifdef DEVICE_ON_SKIN
+					// 将设备质量连接到两个隔框之间的所有节点上
+					for (int j = bulkheadID[Instrument[i].bulkheadID0] * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID1] + 1)*FaiNum; j++)
 					{
 						G1j.push_back(j + 1);
 					}
-					for (int j = (bulkheadID[Instrument[i].bulkheadID1]) * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID1] + 1)*FaiNum ; j++)
+#else
+					// 将设备质量连接到两个隔框所在位置的节点上
+					for (int j = (bulkheadID[Instrument[i].bulkheadID0]) * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID0] + 1)*FaiNum; j++)
 					{
 						G1j.push_back(j + 1);
 					}
-					// for (int j = bulkheadID[Instrument[i].bulkheadID0] * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID1] + 1)*FaiNum + 1; j++)
-					// {
-					// 	G1j.push_back(j + 1);
-					// }
+					for (int j = (bulkheadID[Instrument[i].bulkheadID1]) * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID1] + 1)*FaiNum; j++)
+					{
+						G1j.push_back(j + 1);
+					}
+#endif
 				}
 				np.addRBE3(++EID, ID, 123456, 1.0, 123, G1j);
 			}
@@ -955,7 +957,7 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 	//--------------------------------------------------
 	switch (SOL)
 	{
-	case 101: {
+	case 101: {//静力分析
 		//执行控制部分
 		//ofs3 << "NASTRAN parallel=8" << endl;//对应组合工况的SID
 		np.ssHeader << "SOL 101" << endl;
@@ -1080,7 +1082,7 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 
 	string::size_type iPos = (fileName.find_last_of('\\') + 1) == 0 ? fileName.find_last_of('/') + 1 : fileName.find_last_of('\\') + 1;
 	const string datapath = fileName.substr(0, iPos);//获取文件路径
-
+	const string names = fileName.substr(iPos);
 	np.PrintBDF(datapath, names, NasPrinter::onefile);
 	return 0;
 }
