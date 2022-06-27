@@ -8,13 +8,12 @@
 #include <tlhelp32.h>
 #include <comdef.h>
 using namespace std;
-//#include <cmath>
 #define pi 3.1415926
 
 #define ELEM3		//定义开头封闭
-// #define RBE333		//定义生成多点约束来集成集中质量
+#define HAVE_MASS	//定义生成集中质量
 #define gekuang		//生成隔框
-// #define ONLY_2_MAT
+// #define ONLY_2_MAT //当生成测试网格需要只用两个单元属性时打开
 ShapeMash::ShapeMash() 
 { 
 	ShapeFunc.clear(); 
@@ -47,7 +46,7 @@ void ShapeMash::SetInitInfo(const InitInfo& info)
 	//-----------------------参数设置-----------------------
 	SetShapeFunc(info.ShapeFuncList);//设置弹身外形参数
 	SetCabin(cabinlist);//设置舱段划分
-	SetMassPoint(mplist, 2);//设置集中质量
+	SetMassPoint(mplist, MassDistribution::UseRBE3);//设置集中质量
 	SetStruct(info.beamPID);//设置梁的属性，隔框参数根据舱段定义
 	SetMeshSkin(info.faiNum, ifUseCabinToCalcXsite);//设置网格参数，周向网格数和轴向节点根据舱段定义
 	SetBeamProperty(info.property_list, info.meterial_list, info.meterial8_list);//设置材料属性
@@ -117,7 +116,7 @@ void ShapeMash::SetMeshSkin(int fainum, bool ifUseCabin, int xnum /* = 0 */)
 			double x0 = 0;
 			if (i > 0) x0 = CabinList[i-1].x1;
 			double length = CabinList[i].x1 - x0;
-			int cabinNum = (length/dx < 2) ? 2 : length/dx;
+			int cabinNum = (length/dx < 2) ? 2 : (int)(length/dx);
 			for (int j = 0; j < cabinNum; j++)
 			{
 				Xsite.push_back(x0 + (double)j * length / (double)cabinNum);
@@ -322,7 +321,7 @@ void ShapeMash::CalcMesh()
 		for (int j = 0; j < numFai; j++)
 		{
 			meshSkin.P[i*numFai+j] = point[i][j];
-			#ifdef ELEM3
+#ifdef ELEM3
 			if (i == 0)//三角形单元
 			{
 				if (i < numEta-1 && j < numFai-1)
@@ -341,7 +340,7 @@ void ShapeMash::CalcMesh()
 				}
 			}
 			else//四边形单元
-			# endif
+#endif
 			{
 				if (i < numEta-1 && j < numFai-1)
 				{
@@ -404,11 +403,12 @@ void ShapeMash::CalcMesh()
 	}
 }
 
-void ShapeMash::CalcMassPoint()
+int ShapeMash::CalcMassPoint()
 {
 	masspoint.clear();
-	if (MassDistriType == 0)//原始方法分布质量，按最近的隔框来分配均匀分布质量单元
+	switch (MassDistriType)
 	{
+	case MassDistribution::Distribute:
 		for (int i = 0; i < Instrument.size(); i++)
 		{
 			if (abs(bulkhead[bulkheadID.size()-1] - Instrument[i].GetXc()) < 1e-5)//是否质量点在弹身末端
@@ -447,9 +447,8 @@ void ShapeMash::CalcMassPoint()
 				}
 			}
 		}
-	}
-	else//新的质量添加方法：增加参考点在质心位置，建立RBE3连接质量点到舱段上
-	{
+		break;
+	case MassDistribution::UseRBE3:
 		for (int i = 0; i < Instrument.size(); i++)
 		{
 			if (Instrument[i].IsOnCabin)//在舱段上
@@ -485,10 +484,95 @@ void ShapeMash::CalcMassPoint()
 					}
 				}
 			}
-
 		}
+		break;
+	default:
+		cout << "指定了错误的质量分配方式！" << endl;
+		return -1;
+		break;
 	}
+	// if (MassDistriType == 0)//原始方法分布质量，按最近的隔框来分配均匀分布质量单元
+	// {
+	// 	for (int i = 0; i < Instrument.size(); i++)
+	// 	{
+	// 		if (abs(bulkhead[bulkheadID.size()-1] - Instrument[i].GetXc()) < 1e-5)//是否质量点在弹身末端
+	// 		{
+	// 			if (masspoint.count(bulkheadID[bulkheadID.size()-1]) == 0)
+	// 				masspoint.insert(pair<int,double>(bulkheadID[bulkheadID.size()-1],Instrument[i].GetMass()));
+	// 			else
+	// 				masspoint[bulkheadID[bulkheadID.size()-1]] += Instrument[i].GetMass();
+	// 		}
+	// 		else
+	// 		{
+	// 			for (int id = 0; id < bulkheadID.size()-1; id++)
+	// 			{
+	// 				if (abs(bulkhead[id] - Instrument[i].GetXc()) < 1e-5)//是否质量点在当前id位置处
+	// 				{
+	// 					if (masspoint.count(bulkheadID[id]) == 0)
+	// 						masspoint.insert(pair<int,double>(bulkheadID[id],Instrument[i].GetMass()));
+	// 					else
+	// 						masspoint[bulkheadID[id]] += Instrument[i].GetMass();
+	// 					break;
+	// 				}
+	// 				else if (bulkhead[id] < Instrument[i].GetXc() && Instrument[i].GetXc() < bulkhead[id+1])//是否质量点在id和id+1之间
+	// 				{
+	// 					double m0 = Instrument[i].GetMass() * (bulkhead[id+1] - Instrument[i].GetXc()) / (bulkhead[id+1]-bulkhead[id]);
+	// 					double m1 = Instrument[i].GetMass() * (Instrument[i].GetXc() - bulkhead[id]) / (bulkhead[id+1]-bulkhead[id]);
+	// 					if (masspoint.count(bulkheadID[id]) == 0)
+	// 						masspoint.insert(pair<int,double>(bulkheadID[id],m0));
+	// 					else
+	// 						masspoint[bulkheadID[id]] += m0;
+	// 					if (masspoint.count(bulkheadID[id+1]) == 0)
+	// 						masspoint.insert(pair<int,double>(bulkheadID[id+1],m1));
+	// 					else
+	// 						masspoint[bulkheadID[id+1]] += m1;
+	// 					break;
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+	// else//新的质量添加方法：增加参考点在质心位置，建立RBE3连接质量点到舱段上
+	// {
+	// 	for (int i = 0; i < Instrument.size(); i++)
+	// 	{
+	// 		if (Instrument[i].IsOnCabin)//在舱段上
+	// 		{
+	// 			for (int j = 0; j < CabinList.size(); j++)
+	// 			{
+	// 				if (CabinList[j].x0 < Instrument[i].GetXc() && Instrument[i].GetXc() <= CabinList[j].x1)
+	// 				{
+	// 					Instrument[i].cabinID = j;
+	// 					//通过所在舱段修正发动机质量（输入的质量包括壳体，因此集中质量要减去壳体质量）59257.3-68522
+	// 					double pointmass = Instrument[i].GetMass() - CabinList[j].mass;
+	// 					if (pointmass < 0)
+	// 					{
+	// 						cout << "输入的发动机舱段质量小于壳体质量！请检查输入值！" << endl;
 
+	// 						pointmass = 0;
+	// 					}
+	// 					Instrument[i].SetMass(pointmass);
+	// 				}
+	// 			}
+	// 		}
+	// 		else//在隔框上
+	// 		{
+	// 			for (int j = 0; j < bulkhead.size(); j++)
+	// 			{
+	// 				if (bulkhead[j] < Instrument[i].GetXc()) //&& Instrument[i].GetXc() <= CabinList[j]
+	// 				{
+	// 					Instrument[i].bulkheadID0 = j;
+	// 				}
+	// 				if (Instrument[i].GetXc() <= bulkhead[bulkhead.size()-j-1])
+	// 				{
+	// 					Instrument[i].bulkheadID1 = bulkhead.size()-j-1;
+	// 				}
+	// 			}
+	// 		}
+
+	// 	}
+	// }
+	return 0;
 }
 
 void ShapeMash::CalcCabin()
@@ -533,11 +617,10 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 	for (int i = 0; i < meshSkin.P.size(); i++)
 	{
 		++ID;
-		if (ID == 1 || !(meshSkin.P[i]==Point(0,0,0)))
+		if (ID == 1 || !(meshSkin.P[i] == Point(0,0,0)))
 		{
 			np.addGRID(ID, 0, meshSkin.P[i]);
 		}
-		
 	}
 	//----------------element----------------
 	int cabinID = 0;
@@ -564,7 +647,7 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 			PSHELLlist.push_back(ps);
 #ifdef ONLY_2_MAT
 			if (ps.PID == 1)
-			{
+			{//只输出一个壳单元属性
 				np.addPSHELL(ps);
 			}
 #else
@@ -580,7 +663,7 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 			const int G2 = meshSkin.E[0][i][1] + 1;//节点2 CID
 			const int G3 = meshSkin.E[0][i][2] + 1;//节点3 CID
 #ifdef ONLY_2_MAT
-			np.addCTRIA3(++EID, 1, G1, G2, G3);
+			np.addCTRIA3(++EID, 1, G1, G2, G3);//壳单元属性为1
 #else
 			np.addCTRIA3(++EID, PID, G1, G2, G3);
 #endif
@@ -599,7 +682,7 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 			const int G3 = meshSkin.E[0][i][2] + 1;
 			const int G4 = meshSkin.E[0][i][3] + 1;
 #ifdef ONLY_2_MAT
-			np.addCQUAD4(++EID, 1, G1, G2, G3, G4);
+			np.addCQUAD4(++EID, 1, G1, G2, G3, G4);//壳单元属性为1
 #else
 			np.addCQUAD4(++EID, PID, G1, G2, G3, G4);
 #endif
@@ -613,7 +696,6 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 		}
 	}
 	//----------------element----------------
-	////------------------------需要隔框时请取消这部分注释-----------------------------------
 #ifdef gekuang
 	for (int i = 0; i < meshSkin.E[1].size(); i++)//输出结构隔框单元
 	{
@@ -636,9 +718,9 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 			}
 
 #ifdef ONLY_2_MAT
-			const double PIDnow = 2;//单元属性编号 PID
+			const int PIDnow = 2;//单元属性编号 PID
 #else
-			const double PIDnow = PID + meshSkin.E[1][i][2];//单元属性编号 PID
+			const int PIDnow = PID + meshSkin.E[1][i][2];//单元属性编号 PID
 #endif
 			const int GA = meshSkin.E[1][i][0] + 1;//节点1
 			const int GB = meshSkin.E[1][i][1] + 1;//节点2
@@ -646,7 +728,6 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 		}
 	}
 #endif
-	////------------------------需要隔框时请取消这部分注释-----------------------------------
 
 	//----------------element----------------
 	for (int i = 0; i < meshSkin.E[2].size(); i++)//输出结构横梁单元
@@ -684,31 +765,32 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 			
 		}
 	}
-#ifdef RBE333
-	if (MassDistriType == 0)//集中质量的添加
+#ifdef HAVE_MASS
+	switch (MassDistriType)
 	{
+	case MassDistribution::Distribute:
 		for (map<int, double>::iterator it = masspoint.begin(); it != masspoint.end(); it++)//输出质量单元
 		{
 			const double M = it->second / FaiNum;//单元的质量M
 			for (int j = 0; j < FaiNum; j++)
 			{
 				const int G1 = (it->first) * FaiNum + j + 1;//节点号 G1
-				np.addCMASS2(++EID, M, G1, 6);
+				np.addCMASS2(++EID, M, G1, 1);
 			}
 		}
-	}
-	else
-	{
+		break;
+
+	case MassDistribution::UseRBE3:
 		for (int i = 0; i < Instrument.size(); i++)//创建质量点
 		{
 			if (Instrument[i].IsOnCabin)
-			{//集中质量点
+			{//分配到舱段
 				if (Instrument[i].cabinID > 0)
 				{
 					//质量点
 					ID++;
 					np.addGRID(ID, 0, Instrument[i].pt);
-
+					np.addCMASS2(++EID, Instrument[i].GetMass(), ID, 1);//添加集中质量点
 					//多点约束刚性单元
 					vector<int> G1j;//多个节点
 					for (int j = CabinList[Instrument[i].cabinID].cabinPID0; j < CabinList[Instrument[i].cabinID].cabinPID1 + 1; j++)
@@ -721,29 +803,97 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 				}
 			}
 			else
-			{//分配到舱段
+			{//分配到隔框
 				//质量点
 				ID++;
 				np.addGRID(ID, 0, Instrument[i].pt);
-
+				np.addCMASS2(++EID, Instrument[i].GetMass(), ID, 1);//添加集中质量点
 				//多点约束刚性单元
 				vector<int> G1j;//多个节点
 				if (bulkheadID.size() != 0)
 				{
-					for (int j = bulkheadID[Instrument[i].bulkheadID0] * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID0] + 1)*FaiNum + 1; j++)
+					for (int j = (bulkheadID[Instrument[i].bulkheadID0]) * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID0] + 1)*FaiNum ; j++)
 					{
 						G1j.push_back(j + 1);
 					}
-					for (int j = bulkheadID[Instrument[i].bulkheadID1] * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID1] + 1)*FaiNum + 1; j++)
+					for (int j = (bulkheadID[Instrument[i].bulkheadID1]) * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID1] + 1)*FaiNum ; j++)
 					{
 						G1j.push_back(j + 1);
 					}
+					// for (int j = bulkheadID[Instrument[i].bulkheadID0] * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID1] + 1)*FaiNum + 1; j++)
+					// {
+					// 	G1j.push_back(j + 1);
+					// }
 				}
 				np.addRBE3(++EID, ID, 123456, 1.0, 123, G1j);
 			}
 		}
+		break;
+
+	default:
+		break;
 	}
 #endif
+	// 	if (MassDistriType == 0)//集中质量的添加
+	// 	{
+	// 		for (map<int, double>::iterator it = masspoint.begin(); it != masspoint.end(); it++)//输出质量单元
+	// 		{
+	// 			const double M = it->second / FaiNum;//单元的质量M
+	// 			for (int j = 0; j < FaiNum; j++)
+	// 			{
+	// 				const int G1 = (it->first) * FaiNum + j + 1;//节点号 G1
+	// 				np.addCMASS2(++EID, M, G1, 6);
+	// 			}
+	// 		}
+	// 	}
+	// #ifdef RBE333
+	// 	else
+	// 	{//多点约束的方式添加集中质量
+	// 		for (int i = 0; i < Instrument.size(); i++)//创建质量点
+	// 		{
+	// 			if (Instrument[i].IsOnCabin)
+	// 			{//集中质量点
+	// 				if (Instrument[i].cabinID > 0)
+	// 				{
+	// 					//质量点
+	// 					ID++;
+	// 					np.addGRID(ID, 0, Instrument[i].pt);
+
+	// 					//多点约束刚性单元
+	// 					vector<int> G1j;//多个节点
+	// 					for (int j = CabinList[Instrument[i].cabinID].cabinPID0; j < CabinList[Instrument[i].cabinID].cabinPID1 + 1; j++)
+	// 					{
+	// 						G1j.push_back(j + 1);
+	// 					}
+
+	// 					np.addRBE3(++EID, ID, 123456, 1.0, 123, G1j);
+
+	// 				}
+	// 			}
+	// 			else
+	// 			{//分配到舱段
+	// 				//质量点
+	// 				ID++;
+	// 				np.addGRID(ID, 0, Instrument[i].pt);
+
+	// 				//多点约束刚性单元
+	// 				vector<int> G1j;//多个节点
+	// 				if (bulkheadID.size() != 0)
+	// 				{
+	// 					for (int j = bulkheadID[Instrument[i].bulkheadID0] * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID0] + 1)*FaiNum + 1; j++)
+	// 					{
+	// 						G1j.push_back(j + 1);
+	// 					}
+	// 					for (int j = bulkheadID[Instrument[i].bulkheadID1] * FaiNum; j < (bulkheadID[Instrument[i].bulkheadID1] + 1)*FaiNum + 1; j++)
+	// 					{
+	// 						G1j.push_back(j + 1);
+	// 					}
+	// 				}
+	// 				np.addRBE3(++EID, ID, 123456, 1.0, 123, G1j);
+	// 			}
+	// 		}
+	// 	}
+	// #endif
 	//添加发动机推力
 	//推力作用点
 	if (abs(EnginF.force.getX()) > 10e-5)
@@ -757,7 +907,7 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 		{
 			G1j.push_back(j + 1);
 		}
-		//np.addRBE3(++EID, ID, 123456, 1.0, 123456, G1j);
+		//np.addRBE3(++EID, ID, 123456, 1.0, 123, G1j);
 		np.addRBE2(++EID, ID, 123456, G1j);
 		np.addFORCE(SID, ID, 0, 1.0, EnginF.force);
 
@@ -817,7 +967,7 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 		np.ssHeader << "   SUBTITLE=Default" << endl;
 		np.ssHeader << "   LOAD = " << SID << endl;//对应组合工况的SID
 
-											  //ofs3 << "   DISPLACEMENT(SORT1,REAL)=ALL" << endl;//输出位移
+		//ofs3 << "   DISPLACEMENT(SORT1,REAL)=ALL" << endl;//输出位移
 		np.ssHeader << "   STRESS(SORT1,PUNCH,REAL,VONMISES)=ALL" << endl;//,BILIN输出单元应力 ,PUNCH
 		np.ssHeader << "   STRAIN(SORT1,PUNCH,REAL,VONMISES)=ALL" << endl;//,BILIN
 		np.ssHeader << "   DISPLACEMENT(SORT1,REAL)=ALL" << endl;//

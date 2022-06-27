@@ -22,6 +22,10 @@ public:
 class ShapeMash
 {
 public:
+	enum class MassDistribution{
+		UseRBE3,	//通过集中质量和多点约束进行连接
+		Distribute, //通过质量分配进行连接
+	};
 	ShapeMash();
 	void SetInitInfo(const InitInfo& info);
 
@@ -31,7 +35,7 @@ public:
 	void SetMeshSkin(int fainum, vector<double> xsite = vector<double>(0));//设置网格参数，周向网格数和轴向节点坐标
 	void SetMeshSkin(int fainum, bool ifUseCabin = true,int xnum = 0);
 	void SetStruct(vector<int> beamPID, vector<double> bulkhead = vector<double>(0),vector<int>bulkheadPID = vector<int>(0));//设置梁和隔框的属性
-	void SetMassPoint(vector<MassPoint> ins,int MassDistriType = 0){this->Instrument = ins;this->MassDistriType = MassDistriType;}//设置集中质量
+	void SetMassPoint(vector<MassPoint> ins,MassDistribution MassDistriType){this->Instrument = ins;this->MassDistriType = MassDistriType;}//设置集中质量
 	void SetCabin(const vector<CabinInfo>& cabinList);//设置舱段划分
 	void SetBeamProperty(vector<PBARL> property_list, vector<MAT1> Material_list, vector<MAT8> Material8_list = vector<MAT8>(0));//设置材料属性
 	int updateCabinListT(const vector<PSHELL>&ps);
@@ -48,14 +52,14 @@ protected:
 private:
 	void CalcPoint();		//计算模型节点
 	void CalcMesh();		//计算模型网格
-	void CalcMassPoint();	//计算质量点信息，将集中质量添加到模型
+	int CalcMassPoint();	//计算质量点信息，将集中质量添加到模型
 	void CalcCabin();		
 	CP aeroinfo;				//气动力
 	ConcentratedForce EnginF;	//发动机推力
 	myNastran myNast;			//nastran求解器
 	vector<Point> ShapeFunc;	//外形坐标(x坐标必须单调增加)
 	vector<MassPoint> Instrument;//箭上设备仪器
-	int MassDistriType;			//0原始方法分布质量;1多点连接的方式分布质量
+	MassDistribution MassDistriType;			//0原始方法分布质量;1多点连接的方式分布质量
 	vector<CabinInfo> CabinList;//舱段划分
 	//double ExistCabinNum;		//记录存在的舱段数
 	map<int,double> masspoint;

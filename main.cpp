@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 	unique_ptr<ShapeMash> mt3(new Minuteman3);//TestTube
 	cout << "$---------------------------------------------------$" << endl;
 	cout << "$                    CalcForce                      $" << endl;
-	cout << "$                      v2.2.0                       $" << endl;
+	cout << "$                      v2.2.1                       $" << endl;
 	cout << "$---------------------------------------------------$" << endl;
 	cout << endl;
 
