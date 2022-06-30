@@ -1,7 +1,7 @@
 # 输入文件中缺少的参数将使用程序默认缺省值
 # 特定求解序号对应的特殊参数，进行其他分析时将不会读取
 NastranPath_    string     E:\\Nastran2020\\bin\\nastranw.exe
-ModlePath_      string     C:\\Users\\yycab\\Desktop\\database\\1Y1B\\CalcForce\\data
+ModlePath_      string     data
 ModleName_      string     test0
 OutputPath_     string     C:\\Users\\yycab\\Desktop\\database\\1Y1B\\CalcForce\\result.txt
 AeroPath_       string     C:\\Users\\yycab\\Desktop\\database\\1Y1B\\CalcForce\\CP.dat
