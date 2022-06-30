@@ -7,8 +7,9 @@ class CP
 {
 public:
 	CP(){xlist.clear();thetalist.clear();Datainfo.clear();}
-	double mach;
-	double alpha;
+	double mach = 2;
+	double alpha = 2;
+	double q; //¶¯Ñ¹
 	vector<vector<double>> CPmatrix;
 
 	double getP(double xsite, double theta);

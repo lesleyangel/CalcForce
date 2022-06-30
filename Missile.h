@@ -7,7 +7,7 @@ struct Minuteman3Info
 	struct PathInfo
 	{
 		string PNas{ "" };
-		string PBdf{ "" };
+		string PBdf{ "\\data" };
 		string PNam{ "" };
 		string POut{ "" };
 		string PAer{ "" };

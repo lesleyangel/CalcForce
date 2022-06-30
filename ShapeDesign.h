@@ -48,6 +48,9 @@ public:
 	vector<CabinInfo> GetCabinList(){return CabinList;}
 	const Mesh& GetMesh(){return meshSkin;}
 	double GetStructMass();//输出结构质量
+	double GetCabinStructMass(int _n);//输出某一舱段结构质量
+	double GetWorkConditionMass(int _n);//输出某一工况结构质量
+
 protected:
 private:
 	void CalcPoint();		//计算模型节点

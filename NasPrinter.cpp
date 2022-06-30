@@ -1,6 +1,7 @@
 #include "NasPrinter.h"
 #include <direct.h>
 #include <iomanip>
+
 using namespace std;
 #define C_INT const int
 #define C_DOUBEL const double
@@ -16,6 +17,7 @@ NasPrinter::NasPrinter()
 int NasPrinter::PrintBDF(const std::string& path, const std::string & name, OutputStyle type)
 {	
 	int state = _mkdir(path.c_str());
+
 	switch (type)
 	{
 	case OutputStyle::onefile:{
@@ -146,6 +148,7 @@ string NasPrinter::double2str(const double& db, int size)
 		sign = -1;
 	}
 	//整型
+	int xx = (int)fabsdb;
 	if ((fabsdb - (int)fabsdb) < 0.4 && abs((int)fabsdb - fabsdb) < 1e-5)//四舍
 	{
 		return to_string((int)db) + ".";
@@ -184,7 +187,15 @@ string NasPrinter::double2str(const double& db, int size)
 		ss << setprecision(size - 6) << db;
 	}
 
-	return ss.str();
+	if (abs((int)stof(ss.str()) - stof(ss.str())) < 1e-5) //判断是否为整数
+	{
+		return ss.str() + ".";
+	}
+	else
+	{
+		return ss.str();
+	}
+	
 }
 
 void NasPrinter::addGRID(C_INT CID, C_INT CP, const Point & pt)

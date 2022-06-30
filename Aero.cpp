@@ -75,18 +75,25 @@ void ReadCP::readFile(const string _path){
 	int count=0, sz;
 	for (int i = 1;i<contents.size();++i){
 		if (contents[i].size()>1){
-			if (contents[i][0]=="MACH"){
-				CP_vec.resize(count+1);
-				CP_vec[count].alpha=atof(contents[i][1].c_str());
-				CP_vec[count].mach=atof(contents[i][3].c_str());
-				count+=1;
+			//if (contents[i][0]=="MACH"){
+			//	CP_vec.resize(count+1);
+			//	CP_vec[count].alpha=atof(contents[i][3].c_str());
+			//	CP_vec[count].mach=atof(contents[i][1].c_str());
+			//	count+=1;
+
+			//}
+			if (contents[i][0] == "q") {
+				CP_vec.resize(count + 1);
+				//CP_vec[count].alpha = atof(contents[i][3].c_str());
+				CP_vec[count].q = atof(contents[i][1].c_str());
+				count += 1;
 
 			}
 			else{
 				sz=CP_vec[count-1].CPmatrix.size();
 				for (int j=0;j<8;++j){
 					CP_vec[count-1].CPmatrix.resize(sz+1);
-					CP_vec[count-1].CPmatrix[sz].push_back(atof(contents[i][j].c_str()));
+					CP_vec[count-1].CPmatrix[sz].push_back(CP_vec[count-1].q * atof(contents[i][j].c_str()));  //¿¼ÂÇ¶¯Ñ¹
 
 				}
 			}

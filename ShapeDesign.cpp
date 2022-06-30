@@ -1434,7 +1434,73 @@ double ShapeMash::GetStructMass()
 			mass += Instrument[i].GetMass();
 		}
 	}
+
+	//¼ÆËã¸ô¿ò°ë¾¶
+	vector<int> bh_point = {149,299,300,301,302,303,304,305};
+	vector<double> bh_r;
+	for (int i = 0; i < bh_point.size(); i++)
+	{
+		if (i == 3 || i == 5 || i == 7)
+		{
+			bh_r.push_back((ShapeFunc[bh_point[i]].getY() + ShapeFunc[bh_point[i-1]].getY())/2);
+		}
+		if (bh_r.size() < 10)
+		{
+			bh_r.push_back(ShapeFunc[bh_point[i]].getY());
+		}
+	}
+
+	for (int i = 0; i < property_list.size(); i++)
+	{
+		mass += (property_list[i].DIM[0] * property_list[i].DIM[1] - (property_list[i].DIM[0] - property_list[i].DIM[2]) * (property_list[i].DIM[2] - 2 * property_list[i].DIM[3])) * bh_r[i] * Material_list[i].RHO;
+	}
 	return mass;
+}
+double ShapeMash::GetCabinStructMass(int _n)
+{
+	double mass = 0;
+	mass = CabinList[_n-1].Area * CabinList[_n-1].T * Material8_list[CabinList[_n-1].MID - 1].RHO;
+	vector<vector<int>> numBh = {{1,2},{3},{4,5},{6},{7,8},{9},{10}};
+
+	//¼ÆËã¸ô¿ò°ë¾¶
+	vector<int> bh_point = { 149,299,300,301,302,303,304,305 };
+	vector<double> bh_r;
+	for (int i = 0; i < bh_point.size(); i++)
+	{
+		if (i == 3 || i == 5 || i == 7)
+		{
+			bh_r.push_back((ShapeFunc[bh_point[i]].getY() + ShapeFunc[bh_point[i - 1]].getY()) / 2);
+		}
+		if (bh_r.size() < 10)
+		{
+			bh_r.push_back(ShapeFunc[bh_point[i]].getY());
+		}
+	}
+
+	for (int i = 0; i < numBh[_n-1].size(); i++)
+	{
+		mass += (property_list[numBh[_n-1][i]-1].DIM[0] * property_list[numBh[_n-1][i]-1].DIM[1] - (property_list[numBh[_n-1][i]-1].DIM[0] - property_list[numBh[_n-1][i]-1].DIM[2]) * (property_list[numBh[_n-1][i]-1].DIM[2] - 2 * property_list[numBh[_n-1][i]-1].DIM[3])) * bh_r[numBh[_n-1][i]-1] * Material_list[numBh[_n-1][i]-1].RHO;
+	}
+	return mass;
+}
+double ShapeMash::GetWorkConditionMass(int _n)
+{
+	double a;
+	switch (_n)
+	{
+	case 1:
+	 return(GetStructMass());
+	 break;
+	case 2:
+	 return(GetStructMass() - GetCabinStructMass(5) - GetCabinStructMass(6) - GetCabinStructMass(7) - Instrument[2].GetMass());
+	 break;
+	case 3:
+	return(GetCabinStructMass(1) + GetCabinStructMass(2) + Instrument[0].GetMass() + Instrument[1].GetMass() + Instrument[4].GetMass());
+	break;
+	default:
+		cout << "ÊäÈë²ÎÊýÓÐÎó" << endl;
+	break;
+	}
 }
 
 PBARL ShapeMash::GetPBARL(int id)

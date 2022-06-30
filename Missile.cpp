@@ -1005,133 +1005,176 @@ int Minuteman3::ReadFromFile(const string& path)
 	mt3info.Cabin_list.resize(CabinNum);
 	mt3info.bh_list.resize(bhNum);
 	int state = mt3info.readFile(path);
+
+	auto out = [](const string& name, const string& type, const string& value, stringstream& ss) {
+		const int titlenum = 24;
+		const int tpyenum = 17;
+		ss << setw(titlenum) << name << setw(tpyenum) << type << value << "\n";
+	};
 	if (state < 0) return -1;
 	calcInitInfo();
-	ofstream ofs(mt3info.path_list.POut);
-	ofs << std::left;
-	for (int i = 0; i < aero.CP_vec.size(); i++)
+
+	if (mt3info.SOLtype == 999)
 	{
-		initinfo.CPinfo = aero.CP_vec[i];
-		//-----------------------参数设置-----------------------
+		ofstream ofs(mt3info.path_list.POut);
+		ofs << std::left;
+		stringstream ss_m_t1, ss_m_t2, ss_m_t3,ss_m_c1, ss_m_c2, ss_m_c3, ss_m_c4, ss_m_c5, ss_m_c6, ss_m_c7;
+		ss_m_t1 << std::left;
+		ss_m_t2 << std::left;
+		ss_m_t3 << std::left;
+		ss_m_c1 << std::left;
+		ss_m_c2 << std::left;
+		ss_m_c3 << std::left;
+		ss_m_c4 << std::left;
+		ss_m_c5 << std::left;
+		ss_m_c6 << std::left;
+		ss_m_c7 << std::left;
 		SetInitInfo(initinfo);
-
-		cout << "正在进行第" << i+1 << "个工况的计算" << endl;
-		cout << "[   Alp = " << aero.CP_vec[i].alpha << "  Ma = " << aero.CP_vec[i].mach << "   ]" << endl;
-		//参数计算
 		CalcModel();
-		//结果展示阶段
-		vector<CabinInfo> cb_list_res = GetCabinList();
-		Mesh mesh_res = GetMesh();
-		string filepath = mt3info.path_list.PBdf;
-		string filename = mt3info.path_list.PNam + "_" + to_string(i + 1);
-		cout << "当前求解类型为：" << mt3info.SOLtype << endl;
-		int ifBDFout = PrintMesh(filepath + "\\" + filename, mt3info.SOLtype);
-		if (ifBDFout < 0)
-		{
-			return -3;
-		}
-		cout << "网格生成完成" << endl;
+		//double a = GetCabinStructMass(7);
+		out("TotalStructMass1", "double", to_string(GetStructMass()), ss_m_t1);
+		out("TotalStructMass2", "double", to_string(GetWorkConditionMass(2)), ss_m_t2);
+		out("TotalStructMass3", "double", to_string(GetWorkConditionMass(3)), ss_m_t3);
+		out("Cabin1StructMass", "double", to_string(GetCabinStructMass(1)), ss_m_c1);
+		out("Cabin2StructMass", "double", to_string(GetCabinStructMass(2)), ss_m_c2);
+		out("Cabin3StructMass", "double", to_string(GetCabinStructMass(3)), ss_m_c3);
+		out("Cabin4StructMass", "double", to_string(GetCabinStructMass(4)), ss_m_c4);
+		out("Cabin5StructMass", "double", to_string(GetCabinStructMass(5)), ss_m_c5);
+		out("Cabin6StructMass", "double", to_string(GetCabinStructMass(6)), ss_m_c6);
+		out("Cabin7StructMass", "double", to_string(GetCabinStructMass(7)), ss_m_c7);
 
-		//调用nastran
-		myNastran nas;
-		nas.NastranPath = mt3info.path_list.PNas;
-		nas.BDFPath = filepath + "\\" + filename + ".bdf";
-		nas.WorkPath = filepath;
-		nas.CalcFilePath();
-		int ifNastranRun = nas.NastranCalc();
-		if (ifNastranRun < 0)
+		ofs << ss_m_t1.str() << ss_m_t2.str() << ss_m_t3.str() << ss_m_c1.str() << ss_m_c2.str() << ss_m_c3.str() << ss_m_c4.str() << ss_m_c5.str() << ss_m_c6.str() << ss_m_c7.str();
+		ofs.close();
+	}
+	else 
+	{
+		ofstream ofs(mt3info.path_list.POut);
+		ofs << std::left;
+		for (int i = 0; i < aero.CP_vec.size(); i++)
 		{
-			cout << "Nastran计算未能正常进行" << endl;
-			//system("pause");
-			return -2;
-		}
-		if (mt3info.SOLtype != 101 && mt3info.SOLtype != 200)//101和200支持输出res文件
-		{
-			return mt3info.SOLtype;
-		}
-		//给出单元属于哪个舱段
-		vector<int> CQUAD4_id(cb_list_res.size());
-		for (int j = 0; j < CQUAD4_id.size(); j++)
-		{
-			CQUAD4_id[j] = cb_list_res[j].cabinPID0;//点对应的舱段和单元编号对应舱段基本相似
-		}
-		vector<int> bhBAR_id(mt3info.nowBHnum);
-		for (int j = 0; j < mt3info.nowBHnum; j++)
-		{
-			bhBAR_id[j] = mesh_res.E[0].size() + j * initinfo.faiNum;
-		}
-		if (nas.ReadResPCH(CQUAD4_id,bhBAR_id) < 0)
-		{//如果读取失败则退出
-			return -1;
-		}
-		//
-		
-		stringstream ss_t, ss_1, ss_2,ss_3, ss_4;
-		ss_t << std::left;
-		ss_1 << std::left;
-		ss_2 << std::left;
-		ss_3 << std::left;
-		ss_4 << std::left;
-		auto out = [](const string &name, const string &type, const string &value, stringstream &ss){
-			const int titlenum = 24;
-			const int tpyenum = 17;
-			ss << setw(titlenum) << name << setw(tpyenum) << type << value << "\n";
-		};
-		if (mt3info.SOLtype == 200)
-		{
-			const vector<PSHELL> ps = nas.GetPSHELLlist();
-			int state = updateCabinListT(ps);//优化后更新舱段厚度
-			if (state < 0) return -200;
-			for (size_t j = 0; j < nas.GetPSHELLlist().size(); j++)
+			initinfo.CPinfo = aero.CP_vec[i];
+			//-----------------------参数设置-----------------------
+			SetInitInfo(initinfo);
+
+			cout << "正在进行第" << i + 1 << "个工况的计算" << endl;
+			cout << "[   Alp = " << aero.CP_vec[i].alpha << "  Ma = " << aero.CP_vec[i].mach << "   ]" << endl;
+			//参数计算
+			CalcModel();
+			//结果展示阶段
+			vector<CabinInfo> cb_list_res = GetCabinList();
+			Mesh mesh_res = GetMesh();
+
+			char buffer[MAX_PATH];
+			getcwd(buffer, MAX_PATH);
+			string filepath = buffer + mt3info.path_list.PBdf;
+			string filename = mt3info.path_list.PNam + "_" + to_string(i + 1);
+			cout << "当前求解类型为：" << mt3info.SOLtype << endl;
+			int ifBDFout = PrintMesh(filepath + "\\" + filename, mt3info.SOLtype);
+			if (ifBDFout < 0)
 			{
-				out("cabin_" + to_string(ps[j].PID) + "_T", "double", to_string(ps[j].T),ss_t);
+				return -3;
 			}
-		}
-		out("StructMass", "double", to_string(GetStructMass()), ss_t);
-		out("Alp", "double", to_string(aero.CP_vec[i].alpha), ss_t);
-		out("Ma", "double", to_string(aero.CP_vec[i].mach), ss_t);
+			cout << "网格生成完成" << endl;
 
-		for (int j = 0; j < cb_list_res.size(); j++)
-		{
-			//ofs << "舱段" << j + 1 << "最大工况输出：" << endl;
-			out("Cabin" + to_string(j + 1) + "_MaxStress", "double", to_string(nas.GetMaxStress()[j]), ss_1);
-			const Point maxStress =(
-				mesh_res.P[mesh_res.E[0][nas.GetMaxStressID()[j]][0]] + 
-				mesh_res.P[mesh_res.E[0][nas.GetMaxStressID()[j]][1]] +
-				mesh_res.P[mesh_res.E[0][nas.GetMaxStressID()[j]][2]] +
-				mesh_res.P[mesh_res.E[0][nas.GetMaxStressID()[j]][3]]) / 4.0;
-			const string str_res = to_string(maxStress.getX()) + "," + to_string(maxStress.getY()) + "," + to_string(maxStress.getZ());
-			out("Cabin" + to_string(j + 1) + "_MaxStressSite", "double_vector", str_res, ss_2);
+			//调用nastran
+			myNastran nas;
+			nas.NastranPath = mt3info.path_list.PNas;
+			nas.BDFPath = filepath + "\\" + filename + ".bdf";
+			nas.WorkPath = filepath;
+			nas.CalcFilePath();
+			int ifNastranRun = nas.NastranCalc();
+			if (ifNastranRun < 0)
+			{
+				cout << "Nastran计算未能正常进行" << endl;
+				//system("pause");
+				return -2;
+			}
+			if (mt3info.SOLtype != 101 && mt3info.SOLtype != 200)//101和200支持输出res文件
+			{
+				return mt3info.SOLtype;
+			}
+			//给出单元属于哪个舱段
+			vector<int> CQUAD4_id(cb_list_res.size());
+			for (int j = 0; j < CQUAD4_id.size(); j++)
+			{
+				CQUAD4_id[j] = cb_list_res[j].cabinPID0;//点对应的舱段和单元编号对应舱段基本相似
+			}
+			vector<int> bhBAR_id(mt3info.nowBHnum);
+			for (int j = 0; j < mt3info.nowBHnum; j++)
+			{
+				bhBAR_id[j] = mesh_res.E[0].size() + j * initinfo.faiNum;
+			}
+			if (nas.ReadResPCH(CQUAD4_id, bhBAR_id) < 0)
+			{//如果读取失败则退出
+				return -1;
+			}
+			//
 
-			out("Cabin" + to_string(j + 1) + "_MaxStrain", "double", to_string(nas.GetMaxStrain()[j]), ss_3);
-			const Point maxStrain =(
-				mesh_res.P[mesh_res.E[0][nas.GetMaxStrainID()[j]][0]] +
-				mesh_res.P[mesh_res.E[0][nas.GetMaxStrainID()[j]][1]] +
-				mesh_res.P[mesh_res.E[0][nas.GetMaxStrainID()[j]][2]] +
-				mesh_res.P[mesh_res.E[0][nas.GetMaxStrainID()[j]][3]]) / 4.0;
-			const string str_res2 = to_string(maxStrain.getX()) + "," + to_string(maxStrain.getY()) + "," + to_string(maxStrain.getZ());
-			out("Cabin" + to_string(j + 1) + "_MaxStrainSite", "double_vector", str_res2, ss_4);
-		}
-		ofs << ss_t.str() << ss_1.str()  << ss_2.str()  << ss_3.str()  << ss_4.str();
-		////------------------------需要隔框时请取消这部分注释-----------------------------------
-		//ofs << endl;
-		//for (int j = 0; j < nas.GetMaxStressBar().size(); j++)
-		//{
-		//	//ofs << "隔框" << j + 1 << "最大工况输出：" << endl;
-		//	ofs << "BH" << j+1 << "_MaxStress     = " << nas.GetMaxStressBar()[j] << endl;
-		//	Point maxStress = (mesh_res->P[mesh_res->E[1][nas.GetMaxStressIDBar()[j]-mesh_res->E[0].size()][0]] +
-		//		mesh_res->P[mesh_res->E[1][nas.GetMaxStressIDBar()[j]-mesh_res->E[0].size()][1]]) / 2.0;
-		//	ofs << "BH" << j+1 << "_MaxStressSite = (" << maxStress.getX() << ", " << maxStress.getY() << ", " << maxStress.getZ() << ")" << endl;
+			stringstream ss_t, ss_1, ss_2, ss_3, ss_4;
+			ss_t << std::left;
+			ss_1 << std::left;
+			ss_2 << std::left;
+			ss_3 << std::left;
+			ss_4 << std::left;
 
-		//	ofs << "BH" << j+1 << "_MaxStrain     = " << nas.GetMaxStrainBar()[j] << endl;
-		//	Point maxStrain = (mesh_res->P[mesh_res->E[1][nas.GetMaxStrainIDBar()[j]-mesh_res->E[0].size()][0]] +
-		//		mesh_res->P[mesh_res->E[1][nas.GetMaxStrainIDBar()[j]-mesh_res->E[0].size()][1]]) / 2.0;
-		//	ofs << "BH" << j+1 << "_MaxStrainSite = (" << maxStrain.getX() << ", " << maxStrain.getY() << ", " << maxStrain.getZ() << ")" << endl;
-		//}
-		////------------------------需要隔框时请取消这部分注释-----------------------------------
+			if (mt3info.SOLtype == 200)
+			{
+				const vector<PSHELL> ps = nas.GetPSHELLlist();
+				int state = updateCabinListT(ps);//优化后更新舱段厚度
+				if (state < 0) return -200;
+				for (size_t j = 0; j < nas.GetPSHELLlist().size(); j++)
+				{
+					out("cabin_" + to_string(ps[j].PID) + "_T", "double", to_string(ps[j].T), ss_t);
+				}
+			}
+			out("StructMass", "double", to_string(GetStructMass()), ss_t);
+			out("Alp", "double", to_string(aero.CP_vec[i].alpha), ss_t);
+			out("Ma", "double", to_string(aero.CP_vec[i].mach), ss_t);
+
+			for (int j = 0; j < cb_list_res.size(); j++)
+			{
+				//ofs << "舱段" << j + 1 << "最大工况输出：" << endl;
+				out("Cabin" + to_string(j + 1) + "_MaxStress", "double", to_string(nas.GetMaxStress()[j]), ss_1);
+				const Point maxStress = (
+					mesh_res.P[mesh_res.E[0][nas.GetMaxStressID()[j]][0]] +
+					mesh_res.P[mesh_res.E[0][nas.GetMaxStressID()[j]][1]] +
+					mesh_res.P[mesh_res.E[0][nas.GetMaxStressID()[j]][2]] +
+					mesh_res.P[mesh_res.E[0][nas.GetMaxStressID()[j]][3]]) / 4.0;
+				const string str_res = to_string(maxStress.getX()) + "," + to_string(maxStress.getY()) + "," + to_string(maxStress.getZ());
+				out("Cabin" + to_string(j + 1) + "_MaxStressSite", "double_vector", str_res, ss_2);
+
+				out("Cabin" + to_string(j + 1) + "_MaxStrain", "double", to_string(nas.GetMaxStrain()[j]), ss_3);
+				const Point maxStrain = (
+					mesh_res.P[mesh_res.E[0][nas.GetMaxStrainID()[j]][0]] +
+					mesh_res.P[mesh_res.E[0][nas.GetMaxStrainID()[j]][1]] +
+					mesh_res.P[mesh_res.E[0][nas.GetMaxStrainID()[j]][2]] +
+					mesh_res.P[mesh_res.E[0][nas.GetMaxStrainID()[j]][3]]) / 4.0;
+				const string str_res2 = to_string(maxStrain.getX()) + "," + to_string(maxStrain.getY()) + "," + to_string(maxStrain.getZ());
+				out("Cabin" + to_string(j + 1) + "_MaxStrainSite", "double_vector", str_res2, ss_4);
+			}
+			ofs << ss_t.str() << ss_1.str() << ss_2.str() << ss_3.str() << ss_4.str();
+			////------------------------需要隔框时请取消这部分注释-----------------------------------
+//ofs << endl;
+//for (int j = 0; j < nas.GetMaxStressBar().size(); j++)
+//{
+//	//ofs << "隔框" << j + 1 << "最大工况输出：" << endl;
+//	ofs << "BH" << j+1 << "_MaxStress     = " << nas.GetMaxStressBar()[j] << endl;
+//	Point maxStress = (mesh_res->P[mesh_res->E[1][nas.GetMaxStressIDBar()[j]-mesh_res->E[0].size()][0]] +
+//		mesh_res->P[mesh_res->E[1][nas.GetMaxStressIDBar()[j]-mesh_res->E[0].size()][1]]) / 2.0;
+//	ofs << "BH" << j+1 << "_MaxStressSite = (" << maxStress.getX() << ", " << maxStress.getY() << ", " << maxStress.getZ() << ")" << endl;
+
+//	ofs << "BH" << j+1 << "_MaxStrain     = " << nas.GetMaxStrainBar()[j] << endl;
+//	Point maxStrain = (mesh_res->P[mesh_res->E[1][nas.GetMaxStrainIDBar()[j]-mesh_res->E[0].size()][0]] +
+//		mesh_res->P[mesh_res->E[1][nas.GetMaxStrainIDBar()[j]-mesh_res->E[0].size()][1]]) / 2.0;
+//	ofs << "BH" << j+1 << "_MaxStrainSite = (" << maxStrain.getX() << ", " << maxStrain.getY() << ", " << maxStrain.getZ() << ")" << endl;
+//}
+////------------------------需要隔框时请取消这部分注释-----------------------------------
+			ofs.close();
+	    }
+
 	}
 
-	ofs.close();
+	
 	return 0;
 }
 
@@ -1460,6 +1503,7 @@ int TestTube::ReadFromFile(const string &path)
 	//
 	initinfo.CPinfo.mach = 0;
 	initinfo.CPinfo.alpha = 0;
+	initinfo.CPinfo.q = 0;
 	//材料属性设置
 	MAT8 mat8;
 	mat8.MID = 1;
