@@ -1,0 +1,225 @@
+# 输入文件中缺少的参数将使用程序默认缺省值
+# 特定求解序号对应的特殊参数，进行其他分析时将不会读取
+NastranPath_    string     E:\\Nastran2020\\bin\\nastranw.exe
+ModlePath_      string     data
+ModleName_      string     test0
+OutputPath_     string     C:\\Users\\yycab\\Desktop\\database\\1Y1B\\CalcForce\\result.txt
+AeroPath_       string     C:\\Users\\yycab\\Desktop\\database\\1Y1B\\CalcForce\\CP.dat
+SOLtype_        string     200
+ElemNumRatio    int        1
+
+# SOL103需要的参数
+Modal_order             int          3
+
+# SOL200需要的参数
+cabin_1_T_min           double       0.002
+cabin_2_T_min           double       0.002
+cabin_3_T_min           double       0.002
+cabin_4_T_min           double       0.002
+cabin_5_T_min           double       0.002
+cabin_6_T_min           double       0.002
+cabin_7_T_min           double       0.002
+cabin_1_T_max           double       0.006
+cabin_2_T_max           double       0.006
+cabin_3_T_max           double       0.006
+cabin_4_T_max           double       0.006
+cabin_5_T_max           double       0.006
+cabin_6_T_max           double       0.006
+cabin_7_T_max           double       0.006
+cabin_1_stress_min      double       0.1
+cabin_2_stress_min      double       0.1
+cabin_3_stress_min      double       0.1
+cabin_4_stress_min      double       0.1
+cabin_5_stress_min      double       0.1
+cabin_6_stress_min      double       0.1
+cabin_7_stress_min      double       0.1
+cabin_1_stress_max      double       3.333301e7
+cabin_2_stress_max      double       3.333302e7
+cabin_3_stress_max      double       3.333303e7
+cabin_4_stress_max      double       3.333304e7
+cabin_5_stress_max      double       3.333305e7
+cabin_6_stress_max      double       5.33306e7
+cabin_7_stress_max      double       3.333307e7
+
+# 有限元模型参数
+
+cabin_1_T       double     0.01140198
+cabin_2_T       double     0.01142307
+cabin_3_T       double     0.01137463
+cabin_4_T       double     0.011446385
+cabin_5_T       double     0.011449103
+cabin_6_T       double     0.011447511
+cabin_7_T       double     0.011374434
+bh_1_dim1       double     0.0726052
+bh_1_dim2       double     0.0624118
+bh_1_dim3       double     0.061083
+bh_1_dim4       double     0.0251058
+bh_2_dim1       double     0.0760158
+bh_2_dim2       double     0.0670794
+bh_2_dim3       double     0.0656371
+bh_2_dim4       double     0.0256289
+bh_3_dim1       double     0.0760107
+bh_3_dim2       double     0.0675781
+bh_3_dim3       double     0.0684451
+bh_3_dim4       double     0.0241808
+bh_4_dim1       double     0.0882039
+bh_4_dim2       double     0.0675414
+bh_4_dim3       double     0.0623045
+bh_4_dim4       double     0.0172799
+bh_5_dim1       double     0.0866862
+bh_5_dim2       double     0.0679593
+bh_5_dim3       double     0.0642648
+bh_5_dim4       double     0.0234575
+bh_6_dim1       double     0.0843898
+bh_6_dim2       double     0.0648332
+bh_6_dim3       double     0.0620679
+bh_6_dim4       double     0.0197969
+bh_7_dim1       double     0.0855109
+bh_7_dim2       double     0.0641939
+bh_7_dim3       double     0.0640563
+bh_7_dim4       double     0.0142315
+bh_8_dim1       double     0.0715543
+bh_8_dim2       double     0.0609572
+bh_8_dim3       double     0.0682401
+bh_8_dim4       double     0.0183369
+bh_9_dim1       double     0.0775413
+bh_9_dim2       double     0.0612354
+bh_9_dim3       double     0.065702
+bh_9_dim4       double     0.0181694
+bh_10_dim1      double     0.087564
+bh_10_dim2      double     0.0684676
+bh_10_dim3      double     0.0619178
+bh_10_dim4      double     0.0141596
+cabin_1_length  double     4.04765
+cabin_1_radius  double     0.654108
+cabin_2_length  double     1.95231
+cabin_2_radius  double     0.683384
+cabin_3_length  double     0.790658
+cabin_3_radius  double     0.711814
+cabin_4_length  double     3.17981
+cabin_4_radius  double     0.720207
+cabin_5_length  double     1.13932
+cabin_5_radius  double     0.736701
+cabin_6_length  double     7.08341
+cabin_6_radius  double     0.843974
+cabin_7_length  double     0.85439
+cabin_7_radius  double     0.947297
+cabin_1_E1      double     7.3e+010
+cabin_1_E2      double     7.3e+010
+cabin_1_NU12    double     0.31
+cabin_1_G12     double     2.78626e+010
+cabin_1_G1Z     double     2.78626e+010
+cabin_1_G2Z     double     2.78626e+010
+cabin_1_rho     double     2770
+cabin_2_E1      double     1.24e+011
+cabin_2_E2      double     7.1e+009
+cabin_2_NU12    double     0.28
+cabin_2_G12     double     3.71e+009
+cabin_2_G1Z     double     3.71e+009
+cabin_2_G2Z     double     4.79e+009
+cabin_2_rho     double     1700
+cabin_3_E1      double     7.3e+010
+cabin_3_E2      double     7.3e+010
+cabin_3_NU12    double     0.31
+cabin_3_G12     double     2.78626e+010
+cabin_3_G1Z     double     2.78626e+010
+cabin_3_G2Z     double     2.78626e+010
+cabin_3_rho     double     2770
+cabin_4_E1      double     1.14e+011
+cabin_4_E2      double     1.14e+011
+cabin_4_NU12    double     0.33
+cabin_4_G12     double     4.28571e+010
+cabin_4_G1Z     double     4.28571e+010
+cabin_4_G2Z     double     4.28571e+010
+cabin_4_rho     double     4440
+cabin_5_E1      double     7.3e+010
+cabin_5_E2      double     7.3e+010
+cabin_5_NU12    double     0.31
+cabin_5_G12     double     2.78626e+010
+cabin_5_G1Z     double     2.78626e+010
+cabin_5_G2Z     double     2.78626e+010
+cabin_5_rho     double     2770
+cabin_6_E1      double     2.1e+011
+cabin_6_E2      double     2.1e+011
+cabin_6_NU12    double     0.3
+cabin_6_G12     double     8.07692e+010
+cabin_6_G1Z     double     8.07692e+010
+cabin_6_G2Z     double     8.07692e+010
+cabin_6_rho     double     7900
+cabin_7_E1      double     7.3e+010
+cabin_7_E2      double     7.3e+010
+cabin_7_NU12    double     0.31
+cabin_7_G12     double     2.78626e+010
+cabin_7_G1Z     double     2.78626e+010
+cabin_7_G2Z     double     2.78626e+010
+cabin_7_rho     double     2770
+bh_1_E          double     7.8e+010
+bh_1_rho        double     2550
+bh_1_nu         double     0.31
+bh_2_E          double     7.8e+010
+bh_2_rho        double     2550
+bh_2_nu         double     0.31
+bh_3_E          double     7.8e+010
+bh_3_rho        double     2550
+bh_3_nu         double     0.31
+bh_4_E          double     7.8e+010
+bh_4_rho        double     2550
+bh_4_nu         double     0.31
+bh_5_E          double     7.8e+010
+bh_5_rho        double     2550
+bh_5_nu         double     0.31
+bh_6_E          double     7.8e+010
+bh_6_rho        double     2550
+bh_6_nu         double     0.31
+bh_7_E          double     7.8e+010
+bh_7_rho        double     2550
+bh_7_nu         double     0.31
+bh_8_E          double     7.8e+010
+bh_8_rho        double     2550
+bh_8_nu         double     0.31
+bh_9_E          double     7.8e+010
+bh_9_rho        double     2550
+bh_9_nu         double     0.31
+bh_10_E         double     7.8e+010
+bh_10_rho       double     2550
+bh_10_nu        double     0.31
+part_1_mass     double     25.72
+part_1_xc       double     3.35
+part_1_yc       double     0.01
+part_1_zc       double     0.01
+part_2_mass     double     502.65
+part_2_xc       double     3.5
+part_2_yc       double     0.01
+part_2_zc       double     0.01
+
+NowEngine_      int        1
+engine_1_mass   double     22388.2
+engine_1_xc     double     14.32
+engine_1_yc     double     0.01
+engine_1_zc     double     0.01
+engine_1_Fsx    double     15    # 11.1097
+engine_1_Fsy    double     0
+engine_1_Fsz    double     0.1
+engine_1_Fx     double     270000
+engine_1_Fy     double     0
+engine_1_Fz     double     0
+engine_2_mass   double     7638.1
+engine_2_xc     double     8.25
+engine_2_yc     double     0.01
+engine_2_zc     double     0.01
+engine_2_Fsx    double     
+engine_2_Fsy    double     
+engine_2_Fsz    double     
+engine_2_Fx     double     270000
+engine_2_Fy     double     
+engine_2_Fz     double     
+engine_3_mass   double     3535.32
+engine_3_xc     double     5
+engine_3_yc     double     0.01
+engine_3_zc     double     0.01
+engine_3_Fsx    double     
+engine_3_Fsy    double     
+engine_3_Fsz    double     
+engine_3_Fx     double     
+engine_3_Fy     double     
+engine_3_Fz     double

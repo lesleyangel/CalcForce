@@ -186,8 +186,9 @@ string NasPrinter::double2str(const double& db, int size)
 	{
 		ss << setprecision(size - 6) << db;
 	}
-
-	if (abs((int)stof(ss.str()) - stof(ss.str())) < 1e-5) //判断是否为整数
+	//auto aaaa = (int)stof(ss.str());
+	//double aaaa1 = stod(ss.str());
+	if (abs((int)stof(ss.str()) - stod(ss.str())) < 1e-5) //判断是否为整数
 	{
 		return ss.str() + ".";
 	}

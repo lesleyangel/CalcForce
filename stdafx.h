@@ -24,7 +24,7 @@ using namespace std;
 static int t1;
 static int t2;
 static int setw_value = 20;
-#define pi 3.1415926
+#define pie 3.1415926
 #define mat4D vector<vector<vector<vector<double>>>> 
             // [ALT] [MACH][ALPHA] [BETA][Coeffifient]
 /* end of stdafx.h */

@@ -26,13 +26,13 @@ int main(int argc, char *argv[])
 	unique_ptr<ShapeMash> mt3(new Minuteman3);//TestTube
 	cout << "$---------------------------------------------------$" << endl;
 	cout << "$                    CalcForce                      $" << endl;
-	cout << "$                      v2.2.3                       $" << endl;
+	cout << "$                      v2.2.4                       $" << endl;
 	cout << "$---------------------------------------------------$" << endl;
 	cout << endl;
 
 	//datapath = "C:\\Users\\yycab\\Desktop\\database\\1Y1B\\CalcForce\\Minuteman3struct_input_fortest.txt";
 	int type = mt3->ReadFromFile(datapath);
-	cout << "用时：" << (clock() - brginTime)/1000.0  << "s" << endl;
+	//cout << "用时：" << (clock() - brginTime)/1000.0  << "s" << endl;
 	//system("pause");
 	return 0;
 }

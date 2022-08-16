@@ -1,5 +1,6 @@
 #include "Aero.h"
-
+#include "Spline.h"
+#include <memory>
 
 void CP::CalcThetaList()
 {
@@ -11,7 +12,7 @@ void CP::CalcThetaList()
 	thetalist.resize(CPmatrix[0].size()-1);
 	for (int i = 0; i < thetalist.size(); i++)
 	{
-		thetalist[i] = (double)i * pi / (thetalist.size()-1);
+		thetalist[i] = (double)i * pie / (thetalist.size()-1);
 	}
 }
 
@@ -41,6 +42,38 @@ int CP::CalcData()
 			Datainfo[i*theta_data_num+j-1] = CPmatrix[i][j];
 		}
 	}
+	CalcXList();
+	CalcThetaList();
+	// spline
+	m_xlist = new double[xlist.size()];
+	m_thetalist = new double[thetalist.size()];
+	for (size_t i = 0; i < xlist.size(); i++)
+	{
+		m_xlist[i] = xlist[i];
+	}
+	for (size_t i = 0; i < thetalist.size(); i++)
+	{
+		m_thetalist[i] = thetalist[i];
+	}
+	m_data.resize(CPmatrix[0].size()-1);
+	m_spline_list.resize(CPmatrix[0].size()-1);
+	for (size_t i = 0; i < m_data.size(); i++)
+	{
+		m_data[i] = new double[CPmatrix.size()];
+	}
+	for (size_t i = 0; i < CPmatrix.size(); i++)
+	{
+		for (size_t j = 1; j < CPmatrix[i].size(); j++)
+		{
+			m_data[j-1][i] = CPmatrix[i][j];
+		}
+	}
+	for (size_t i = 0; i < m_spline_list.size(); i++)
+	{
+		m_spline_list[i] = new Spline(m_xlist, m_data[i], CPmatrix.size());
+	}
+	
+
 	return 0;
 }
 double CP::getP(double xsite, double theta)
@@ -61,17 +94,60 @@ double CP::getP(double xsite, double theta)
 	xsite = (xsite < xlist[0]) ? xlist[0] : xsite;
 	xsite = (xsite > *(xlist.end()-1)) ? *(xlist.end()-1) : xsite;
 
-	return Interpolation2(thetalist,xlist,Datainfo,theta,xsite);
+	//double res1 = Interpolation2(thetalist,xlist,Datainfo,theta,xsite);
+
+	// Spline
+	unique_ptr<double[]> res_theta(new double[thetalist.size()]);
+	for (size_t i = 0; i < thetalist.size(); i++)
+	{
+		if (xsite < m_spline_list[i]->getMinX() || m_spline_list[i]->getMaxX() < xsite)
+		{
+			res_theta[i] = 0;
+		}
+		else
+		{
+			// try
+			// {
+				m_spline_list[i]->SinglePointInterp(xsite, res_theta[i]);
+				// cout << res_theta[i] << endl;
+				// }
+				// catch (SplineFailure sf)
+				// {
+				// 	//reslist[i] = 0;
+				// 	cout << sf.GetMessage() << endl;
+				// }
+		}
+	}
+	std::unique_ptr<SplineInterface> sp(new Spline(m_thetalist, res_theta.get(), thetalist.size())); //使用接口，且使用默认边界条件
+
+	double res=0;
+	if (theta < sp->getMinX() || sp->getMaxX() < theta)
+	{
+		res = 0;
+	}
+	else
+	{
+		// try
+		// {
+			sp->SinglePointInterp(theta, res);
+		// }
+		// catch (SplineFailure sf)
+		// {
+		// 	//resForce = 0;
+		// 	cout << sf.GetMessage() << endl;
+		// }
+	}
+	return res * q;
 }
 
-void ReadCP::readFile(const string _path){
+void ReadCP::readFile(const string _path,double q){
 
 	vector<vector<string>> contents;
 	vector<string> delimiter;
 	initDelimiter(delimiter);
 	this->readFilePerElement(_path, contents, delimiter);
 
-	double curMACH, curALPHA;
+	// double curMACH, curALPHA;
 	int count=0, sz;
 	for (int i = 1;i<contents.size();++i){
 		if (contents[i].size()>1){
@@ -85,7 +161,8 @@ void ReadCP::readFile(const string _path){
 			if (contents[i][0] == "q") {
 				CP_vec.resize(count + 1);
 				//CP_vec[count].alpha = atof(contents[i][3].c_str());
-				CP_vec[count].q = atof(contents[i][1].c_str());
+				//CP_vec[count].q = atof(contents[i][1].c_str());
+				CP_vec[count].q = q;
 				count += 1;
 
 			}
@@ -93,13 +170,14 @@ void ReadCP::readFile(const string _path){
 				sz=CP_vec[count-1].CPmatrix.size();
 				for (int j=0;j<8;++j){
 					CP_vec[count-1].CPmatrix.resize(sz+1);
-					CP_vec[count-1].CPmatrix[sz].push_back(CP_vec[count-1].q * atof(contents[i][j].c_str()));  //考虑动压
-
+					CP_vec[count - 1].CPmatrix[sz].push_back(atof(contents[i][j].c_str())); //考虑动压
 				}
+
 			}
 		}
 	}
 
+	
 }
 
 

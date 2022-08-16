@@ -1064,9 +1064,11 @@ int Minuteman3::ReadFromFile(const string& path)
 			vector<CabinInfo> cb_list_res = GetCabinList();
 			Mesh mesh_res = GetMesh();
 
-			char buffer[MAX_PATH];
-			getcwd(buffer, MAX_PATH);
-			string filepath = buffer + mt3info.path_list.PBdf;
+			//char buffer[MAX_PATH];
+			//getcwd(buffer, MAX_PATH);
+			//auto aaaa = path.find_last_of("\\");
+			string pathT = path.substr(0, path.find_last_of("\\"));
+			string filepath = pathT + mt3info.path_list.PBdf;
 			string filename = mt3info.path_list.PNam + "_" + to_string(i + 1);
 			cout << "当前求解类型为：" << mt3info.SOLtype << endl;
 			int ifBDFout = PrintMesh(filepath + "\\" + filename, mt3info.SOLtype);
@@ -1189,7 +1191,7 @@ int Minuteman3::calcInitInfo()
 		return acos(1 - 2 * x / L);
 	};
 	auto r = [](double Rd, double phi){
-		return Rd / sqrt(pi) * sqrt(phi - 1.0 / 2.0 * sin(2 * phi));
+		return Rd / sqrt(pie) * sqrt(phi - 1.0 / 2.0 * sin(2 * phi));
 	};
 	
 	initinfo.ShapeFuncList.resize(HeadPrecision);
@@ -1257,14 +1259,20 @@ int Minuteman3::calcInitInfo()
 
 	bool ifUseCabinToCalcXsite = true;//使用舱段初始化信息计算轴向坐标点数
 	//气动力设置
-	
-	aero.readFile(mt3info.path_list.PAer);
-	if (aero.CP_vec.size() == 0)
-	{
-		cout << "当前未能读取到正确的气动力数据！分析终止" << endl;
-		//system("pause");
-		return -1;
-	}
+	aero.readFile(mt3info.path_list.PAer,mt3info.Q);
+		if (aero.CP_vec.size() == 0)
+		{
+			cout << "当前未能读取到正确的气动力数据！分析终止" << endl;
+			//system("pause");
+			return -1;
+		}
+		//else
+		//{
+		//	for (int i = 0; i < aero.CP_vec.size(); i++)
+		//	{
+
+		//	}
+		//}
 	ofstream ofs(mt3info.path_list.POut);
 
 	//定义隔框、横梁的截面属性和材料信息
@@ -1364,6 +1372,7 @@ int Minuteman3Info::readFile(const string& path)
 	inp.update("SOLtype_",		this->SOLtype);
 	inp.update("NowEngine_",	this->nowEngine);
 	inp.update("ElemNumRatio", this->ElemNumRatio);
+	inp.update("Q",this->Q);
 
 	for (size_t id = 0; id < mass_list.size();id++)//设备质量参数
 	{
@@ -1536,7 +1545,7 @@ int TestTube::ReadFromFile(const string &path)
 	initinfo.faiNum = (int)(initinfo.faiNum * Ratio); //定义周向坐标点数
 	//
 	ReadCP aero;
-	aero.readFile(mt3info.path_list.PAer);
+	aero.readFile(mt3info.path_list.PAer,mt3info.Q);
 	if (aero.CP_vec.size() == 0)
 	{
 		cout << "当前未能读取到正确的气动力数据！分析终止" << endl;

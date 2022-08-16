@@ -50,6 +50,7 @@ struct Minuteman3Info
 	int nowEngine; //= 0
 	int SOLtype;//默认是退出分析= -1
 	double ElemNumRatio = 0.5;
+	double Q = 0.1;
 };
 
 

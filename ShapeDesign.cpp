@@ -8,7 +8,7 @@
 #include <tlhelp32.h>
 #include <comdef.h>
 using namespace std;
-#define pi 3.1415926
+#define pie 3.1415926
 
 #define ELEM3		//定义开头封闭
 #define HAVE_MASS	//定义生成集中质量
@@ -208,7 +208,7 @@ void ShapeMash::CalcPoint()
 	{
 		cout << "当前未设置气动力数据！程序将不会生成气动力文件!" << endl;
 	}
-	double deltaFai = 2 * pi / FaiNum;
+	double deltaFai = 2 * pie / FaiNum;
 	Xsite.insert(Xsite.end(), bulkhead.begin(), bulkhead.end());
 	sort(Xsite.begin(), Xsite.end());
 	for (vector<double>::iterator it = Xsite.begin(); it != Xsite.end()-1; it++)
@@ -293,11 +293,11 @@ void ShapeMash::CalcPoint()
 			double z = radius * sin(phi_);
 			point[i][j] = Point(x,y,z);
 			//得到点上的压强值
-			if (pi < phi_ && phi_ < 2*pi)
+			if (pie < phi_ && phi_ < 2*pie)
 			{
-				phi_ = 2*pi - phi_;
+				phi_ = 2*pie - phi_;
 			}
-			else if (phi_ >= 2*pi || phi_ < 0)
+			else if (phi_ >= 2*pie || phi_ < 0)
 			{
 				phi_ = 0;
 			}
@@ -459,8 +459,7 @@ int ShapeMash::CalcMassPoint()
 					if (CabinList[j].x0 < Instrument[i].GetXc() && Instrument[i].GetXc() <= CabinList[j].x1)
 					{
 						Instrument[i].cabinID = j;
-						//通过所在舱段修正发动机质量（输入的质量包括壳体，因此集中质量要减去壳体质量）59257.3-68522
-						double pointmass = Instrument[i].GetMass() - CabinList[j].mass;
+						double pointmass = Instrument[i].GetMass();
 						if (pointmass < 0)
 						{
 							cout << "输入的发动机舱段质量小于壳体质量！请检查输入值！" << endl;
@@ -587,7 +586,11 @@ void ShapeMash::CalcCabin()
 			if (CabinList[id].x0 <= point[i][0].getX() && point[i][0].getX() < CabinList[id].x1)
 			{
 				double length = sqrt(pow(point[i + 1][0].getX() - point[i][0].getX(), 2) + pow(point[i + 1][0].getY() - point[i][0].getY(), 2));
-				CabinList[id].Area += 2 * pi * point[i][0].getY() * length;
+				CabinList[id].Area += 2 * pie * point[i][0].getY() * length;
+				if (i > 97)
+				{
+					int iii = 11;
+				}
 			}
 		}
 		CabinArea += CabinList[id].Area;
@@ -1058,7 +1061,7 @@ int ShapeMash::PrintMesh(string fileName, int SOL)
 		np.ssHeader << "PARAM   PRTMAXIM YES" << endl;
 		np.ssHeader << "PARAM,INREL,-2" << endl;//定义惯性释放
 
-		for (int ID = 1; ID < PSHELLlist.size()+1; ID++)//定义变量
+		for (int ID = 1; ID < PSHELLlist.size(); ID++)//定义变量    不优化舱段7的厚度
 		{
 			const PSHELL& ps = PSHELLlist[ID - 1];
 			const MAT8& mat8 = Material8_list[ps.MID - 1];
@@ -1100,7 +1103,7 @@ int find_process(string process_name)
 	bool is_exist=Process32First(process_snapshot_handle,&pe32);//找第一个
 	while(is_exist)
 	{
-		if(!stricmp(process_name.c_str(),_bstr_t(pe32.szExeFile))) count++;//进程名不区分大小写
+		if(!_stricmp(process_name.c_str(),_bstr_t(pe32.szExeFile))) count++;//进程名不区分大小写
 		is_exist=Process32Next(process_snapshot_handle,&pe32);//找下一个
 	}
 	return count;
@@ -1142,7 +1145,7 @@ int myNastran::NastranCalc()
 		int count=0;
 		string process_name="nastran.exe";
 
-		count=find_process(process_name);
+		count= find_process(process_name);
 		if (count == 0)
 		{
 			cout << " | nastran.exe 运行结束" << endl;
@@ -1173,9 +1176,9 @@ int myNastran::NastranCalc()
 			//system("C:\\Users\\yycab\\Desktop\\bdf\\nastranTESTfile\\KillNastran.bat");//dos()杀掉nastran进程 懒得写 后面再加吧
 			break;
 		}
-		else if (clock() - brginTime1 > 8000)
+		else if (clock() - brginTime1 > 20000)
 		{
-			cout << " | 超过8s还没读到log分析成功，Nastran分析有误*******" << endl;
+			cout << " | 超过20s还没读到log分析成功，Nastran分析有误*******" << endl;
 			//system("pause");
 			return -1;
 		}
@@ -1190,9 +1193,9 @@ int myNastran::NastranCalc()
 			cout << " | "<<pchPath << " 文件已成功生成" << endl;
 			break;
 		}
-		else if (clock() - brginTime2 > 8000)
+		else if (clock() - brginTime2 > 20000)
 		{
-			cout << " | 超过8s还未能正确生成 '.pch'！请检查 "<< pchPath <<" 文件是否存在*******" << endl;
+			cout << " | 超过20s还未能正确生成 '.pch'！请检查 "<< pchPath <<" 文件是否存在*******" << endl;
 			//system("pause");
 			return -1;
 		}
@@ -1271,7 +1274,7 @@ int myNastran::ReadResPCH(const vector<int>& CQUAD4id, const vector<int>&CBARid)
 					getline(ifs, str_line); double data = atof(str_line.substr(36, 18).c_str());//3
 					//getline(ifs, str_line); double data = atof(str_line.substr(18, 35).c_str());//4
 
-					if (cabinID + 1 < CQUAD4id.size() && id == CQUAD4id[cabinID + 1])
+					if (cabinID + 1 < CQUAD4id.size() && id == CQUAD4id[cabinID + 1]+1)
 					{
 						cabinID++;
 					}
@@ -1335,7 +1338,7 @@ int myNastran::ReadResPCH(const vector<int>& CQUAD4id, const vector<int>&CBARid)
 					getline(ifs, str_line);//2
 					getline(ifs, str_line); const double data = atof(str_line.substr(36, 18).c_str());//3
 					//getline(ifs, str_line); double data = atof(str_line.substr(18, 18).c_str());//4
-					if (cabinID + 1 < CQUAD4id.size() && id == CQUAD4id[cabinID + 1])
+					if (cabinID + 1 < CQUAD4id.size() && id == CQUAD4id[cabinID + 1]+1)
 					{
 						cabinID++;
 					}
@@ -1438,7 +1441,12 @@ double ShapeMash::GetStructMass()
 	//计算隔框半径
 	vector<int> bh_point = {149,299,300,301,302,303,304,305};
 	vector<double> bh_r;
-	for (int i = 0; i < bh_point.size(); i++)
+	int ii = 0;
+	while (bh_point[ii]<ShapeFunc.size()-1)
+	{
+		ii += 1;
+	}
+	for (int i = 0; i <= ii; i++)
 	{
 		if (i == 3 || i == 5 || i == 7)
 		{
@@ -1450,13 +1458,13 @@ double ShapeMash::GetStructMass()
 		}
 	}
 
-	for (int i = 0; i < property_list.size(); i++)
+	for (int i = 0; i < bh_r.size(); i++)
 	{
-		mass += (property_list[i].DIM[0] * property_list[i].DIM[1] - (property_list[i].DIM[0] - property_list[i].DIM[2]) * (property_list[i].DIM[2] - 2 * property_list[i].DIM[3])) * bh_r[i] * Material_list[i].RHO;
+			mass += 2 * pie * (property_list[i].DIM[0] * property_list[i].DIM[1] - (property_list[i].DIM[0] - property_list[i].DIM[2]) * (property_list[i].DIM[2] - 2 * property_list[i].DIM[3])) * bh_r[i] * Material_list[i].RHO;
 	}
 	return mass;
 }
-double ShapeMash::GetCabinStructMass(int _n)
+double ShapeMash::GetCabinStructMass(int _n)   
 {
 	double mass = 0;
 	mass = CabinList[_n-1].Area * CabinList[_n-1].T * Material8_list[CabinList[_n-1].MID - 1].RHO;
@@ -1479,23 +1487,49 @@ double ShapeMash::GetCabinStructMass(int _n)
 
 	for (int i = 0; i < numBh[_n-1].size(); i++)
 	{
-		mass += (property_list[numBh[_n-1][i]-1].DIM[0] * property_list[numBh[_n-1][i]-1].DIM[1] - (property_list[numBh[_n-1][i]-1].DIM[0] - property_list[numBh[_n-1][i]-1].DIM[2]) * (property_list[numBh[_n-1][i]-1].DIM[2] - 2 * property_list[numBh[_n-1][i]-1].DIM[3])) * bh_r[numBh[_n-1][i]-1] * Material_list[numBh[_n-1][i]-1].RHO;
+		mass += 2*pie*(property_list[numBh[_n-1][i]-1].DIM[0] * property_list[numBh[_n-1][i]-1].DIM[1] - (property_list[numBh[_n-1][i]-1].DIM[0] - property_list[numBh[_n-1][i]-1].DIM[2]) * (property_list[numBh[_n-1][i]-1].DIM[2] - 2 * property_list[numBh[_n-1][i]-1].DIM[3])) * bh_r[numBh[_n-1][i]-1] * Material_list[numBh[_n-1][i]-1].RHO;
+	}
+	return mass;
+} //包括隔框质量的舱段质量
+double ShapeMash::GetBeamheadMass(int _n)
+{
+	double mass = 0;
+	vector<vector<int>> numBh = { {1,2},{3},{4,5},{6},{7,8},{9},{10} };
+
+	//计算隔框半径
+	vector<int> bh_point = { 149,299,300,301,302,303,304,305 };
+	vector<double> bh_r;
+	for (int i = 0; i < bh_point.size(); i++)
+	{
+		if (i == 3 || i == 5 || i == 7)
+		{
+			bh_r.push_back((ShapeFunc[bh_point[i]].getY() + ShapeFunc[bh_point[i - 1]].getY()) / 2);
+		}
+		if (bh_r.size() < 10)
+		{
+			bh_r.push_back(ShapeFunc[bh_point[i]].getY());
+		}
+	}
+
+	for (int i = 0; i < numBh[_n - 1].size(); i++)
+	{
+		mass += 2 * pie * (property_list[numBh[_n - 1][i] - 1].DIM[0] * property_list[numBh[_n - 1][i] - 1].DIM[1] - (property_list[numBh[_n - 1][i] - 1].DIM[0] - property_list[numBh[_n - 1][i] - 1].DIM[2]) * (property_list[numBh[_n - 1][i] - 1].DIM[2] - 2 * property_list[numBh[_n - 1][i] - 1].DIM[3])) * bh_r[numBh[_n - 1][i] - 1] * Material_list[numBh[_n - 1][i] - 1].RHO;
 	}
 	return mass;
 }
 double ShapeMash::GetWorkConditionMass(int _n)
 {
-	double a;
+	vector<double> a;
 	switch (_n)
 	{
 	case 1:
 	 return(GetStructMass());
 	 break;
 	case 2:
-	 return(GetStructMass() - GetCabinStructMass(5) - GetCabinStructMass(6) - GetCabinStructMass(7) - Instrument[2].GetMass());
+	 return(GetStructMass() - GetCabinStructMass(5)- GetCabinStructMass(6)-GetCabinStructMass(7) - Instrument[2].GetMass());
 	 break;
 	case 3:
-	return(GetCabinStructMass(1) + GetCabinStructMass(2) + Instrument[0].GetMass() + Instrument[1].GetMass() + Instrument[4].GetMass());
+	return(GetCabinStructMass(1)  + Instrument[0].GetMass() + Instrument[1].GetMass() + Instrument[4].GetMass()+ GetCabinStructMass(2));
 	break;
 	default:
 		cout << "输入参数有误" << endl;

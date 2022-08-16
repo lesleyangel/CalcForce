@@ -1,6 +1,7 @@
 #pragma once
 #include "stdafx.h"
-#include "Interpolation.h"
+//#include "Interpolation.h"
+#include "Spline.h"
 #ifndef TOYYC_H
 #define TOYYC_H
 class CP
@@ -17,6 +18,10 @@ private:
 	vector<double> xlist;
 	vector<double> thetalist;
 	vector<double> Datainfo;
+	double *m_xlist;
+	double *m_thetalist;
+	vector<double *> m_data;
+	vector<Spline *> m_spline_list;
 	void CalcXList();
 	void CalcThetaList();
 	int CalcData();
@@ -28,7 +33,7 @@ public:
 	
 	// CP
 	vector<CP> CP_vec;
-	void readFile(const string _path);
+	void readFile(const string _path, double q);
 protected:
 
 	void readFilePerElement(const string _filePath, vector<vector<string>>& _tokens, vector<string>& _delimiter);
